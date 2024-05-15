@@ -1,81 +1,82 @@
 #include<string>
 #include<format>
+#include<chrono>
+#include<cassert>
 #include "bitvector.h"
+#include "filereader.h"
 
 using namespace std;
 
-const uint64_t ONE = 1;
+vector<uint64_t> computeOutputs(BitVector bv, vector<RSOperation> operations) {
+    vector<uint64_t> result;
 
-BitVector constructFromString(string data) {
-    BitVector result;
+    for (vector<RSOperation>::iterator it = operations.begin(); it != operations.end(); it++) {
+        cout << "Current Operation " << operationToString(*it) << endl;
+
+        uint64_t currentResult;
+        switch ((*it).query) {
+            case ACCESS:
+                currentResult = accessBitVetor(bv, (*it).arg1);
+                break;
+            case RANK:
+                currentResult = scanRank(bv, (*it).arg1, (*it).arg2);
+                break;
+            case SELECT:
+                currentResult = scanSelect(bv, (*it).arg1, (*it).arg2);
+                break;
+            default:
+                currentResult = -1;
+        }
+
+        result.push_back(currentResult);
+    }
 
     
-    uint64_t currentWord = 0;
-
-    size_t i = 0;
-
-    while (i < data.size()) {
-        switch (data[i]) {
-            case '0':
-                currentWord = currentWord << 1;
-                break;
-            
-            case '1':
-                currentWord = currentWord << 1;
-                currentWord = currentWord | ONE;
-                break;
-            
-            default:
-                string m = "Character ";
-                m.push_back(data[i]);
-                m += " not legal.";
-                throw runtime_error(m);
-        }
-
-        if (i % 64 == 63) {
-            cout << currentWord << endl;
-            result.data.push_back(currentWord);
-            currentWord = 0;
-        }
 
 
-        i++;
-    }
-
-    if (i % 64 == 0) {
-        return result;
-    }
-
-    currentWord = currentWord << (64 - (i % 64));
-    result.data.push_back(currentWord);
 
     return result;
 }
 
-int64_t accessBitVetor(BitVector v, size_t index) {
-    
-    size_t wordNumber = index / 64;
-    cout << "WN " << wordNumber << endl;
+int main(int argc, char *argv[]) {
 
-    size_t offset = index % 64;
-    cout << "OS " << wordNumber << endl;
+    // Read file names from programm parameters
+    assert(argc == 3 && "Wrong number of arguemnts.");
+    string inputfile, outputfile;
+    inputfile = argv[1];
+    outputfile = argv[2];
 
-    uint64_t word = v.data[wordNumber];
-    cout << "WORD " << word << endl;
+    // Read input from file into stringarray
+    RSStringInput *input = readRSInput("input.txt");
 
-    uint64_t shifted = word >> (63 - offset);
-    cout << "SHIFTED " << shifted << endl;
+    // Construct the bitvector from the input string
+    BitVector bv = constructFromString((*input).bv);
 
-    return shifted & ONE;
-}
+    // TODO Compute the results
+    vector<uint64_t> result = computeOutputs(bv, (*input).operations);
 
-int main() {
+    for (vector<uint64_t>::iterator it = result.begin(); it != result.end(); it++) {
+        cout << "RESULT : " << *it << endl;
+    }
+
+    // TODO Output the results
+
+
+
+
+
+
     //string input = "1000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
-    string input = "10000000000";
-    BitVector v = constructFromString(input);
+    //string input = "10000000000";
+    //BitVector v = constructFromString(input);
 
-    uint64_t bit = accessBitVetor(v, 2);
-    cout << "Access " << bit << endl;
+    //uint64_t bit = accessBitVetor(v, 2);
+    //cout << "Access " << bit << endl;
+
+    // RankSelectInput input;
+
+    // input = readRSInputFromFile("input.txt");
+    
 
     return 0;
 }

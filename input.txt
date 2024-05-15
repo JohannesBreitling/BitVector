@@ -1,0 +1,6 @@
+4
+100101001
+access 1
+rank 1 2
+select 0 1
+access 3
